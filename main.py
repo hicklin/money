@@ -232,8 +232,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--debug', default="INFO", choices={"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"},
                         help="Set the debug level. Standard python levels - ERROR, WARNING, INFO, DEBUG")
-    parser.add_argument('--iface', default='wlan0',
-                        help="Set interface for manager to use")
 
     args = parser.parse_args()
 
@@ -246,9 +244,8 @@ if __name__ == '__main__':
 
     processor = StatementProcessor()
 
+    # processor.convert_pdf_statements(pdf_dir, txt_out_dir)
     processor.parse_txt_file("test_out/statements.txt")
     processor.export_json("a.json")
     processor.export_csv("a.csv")
-
-    # processor.convert_pdf_statements(pdf_dir, txt_out_dir)
 
