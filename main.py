@@ -308,7 +308,7 @@ class StatementProcessor:
         self.end_paid_in_index = pe + 3
 
         ps, pe = self.get_start_end_index(header_string, self.BALANCE_TEXT)
-        self.start_balance_index = ps + 2
+        self.start_balance_index = ps - 3
         
         logging.debug("Reset indices to %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i" % (self.start_date_index, 
                                                                                        self.end_date_index, 
