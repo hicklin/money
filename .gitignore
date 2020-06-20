@@ -1,5 +1,5 @@
-/test
-/test_out
+/out
 /venv
 /.idea
 /__pycache__
+/statements
