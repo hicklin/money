@@ -2,6 +2,7 @@ import os
 import re
 import json
 import copy
+import shutil
 import logging
 import datetime
 import argparse
@@ -346,26 +347,30 @@ class StatementProcessor:
         
 
 if __name__ == '__main__':
+    temp_txt_out_dir = "temp_out"
+    os.makedirs(temp_txt_out_dir, exist_ok=True)
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--debug', default="INFO", choices={"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"},
                         help="Set the debug level. Standard python levels - ERROR, WARNING, INFO, DEBUG")
-
+    parser.add_argument('-k', '--keep_txt', action="store_true", help="Keep the intermediate text files.")
+    parser.add_argument('-d', '--pdf_dir', required=True, help="The directory containing the PDF statements to parse.")
+    parser.add_argument('-o', '--output', required=True, help="Name of output JSON and CSV files.")
     args = parser.parse_args()
 
     logging.basicConfig(level=args.debug, format='%(asctime)s - %(module)s:%(levelname)s: %(message)s')
 
-    # pdf_dir = "statements"
-    txt_out_dir = "out"
-    #
     processor = StatementProcessor()
-    #
-    # logging.info('Parsing statements in %s' % pdf_dir)
-    # processor.convert_pdf_statements(pdf_dir, txt_out_dir)
-    #
-    processor.parse_txt_files("out")
 
-    processor.export_json("a.json")
-    processor.export_csv("a.csv")
+    logging.info('Parsing statements in %s' % args.pdf_dir)
+    processor.convert_pdf_statements(args.pdf_dir, temp_txt_out_dir)
 
-    # processor.parse_txt_file("out/statements(1).txt")
+    processor.parse_txt_files(temp_txt_out_dir)
+
+    logging.info("Exporting data to %s.json and %s.csv" % (args.output, args.output))
+    processor.export_json("%s.json" % args.output)
+    processor.export_csv("%s.csv" % args.output)
+
+    if not args.keep_txt:
+        shutil.rmtree(temp_txt_out_dir, ignore_errors=True)
