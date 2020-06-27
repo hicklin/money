@@ -346,7 +346,7 @@ class StatementProcessor:
         
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='CAT Connection Journey WiFi Manager')
+    parser = argparse.ArgumentParser()
 
     parser.add_argument('--debug', default="INFO", choices={"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"},
                         help="Set the debug level. Standard python levels - ERROR, WARNING, INFO, DEBUG")
