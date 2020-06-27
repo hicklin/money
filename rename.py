@@ -13,13 +13,21 @@ def get_new_name(pdf_path):
     p = Popen(["grep", "[0-9]\{1,2\} [a-zA-Z][a-zA-Z]* to [0-9]\{1,2\} [a-zA-Z][a-zA-Z]* [0-9]\{4\}", "-m 1", "-o",
                temporary_txt_filename], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     date_range = p.stdout.read().decode()
+    if date_range:
+        dates = date_range.strip("\n").split(" to ")
+        logging.debug("Got dates: %s" % dates)
+        end_date = datetime.datetime.strptime(dates[1], "%d %B %Y")
+        start_date = datetime.datetime.strptime("%s %i" % (dates[0], end_date.year), "%d %B %Y")
+    else:
+        p = Popen(["grep", "[0-9]\{1,2\} [a-zA-Z][a-zA-Z]* [0-9]\{4\} to [0-9]\{1,2\} [a-zA-Z][a-zA-Z]* [0-9]\{4\}", "-m 1", "-o",
+                   temporary_txt_filename], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        date_range = p.stdout.read().decode()
+        dates = date_range.strip("\n").split(" to ")
+        logging.debug("Got dates: %s" % dates)
+        start_date = datetime.datetime.strptime(dates[0], "%d %B %Y")
+        end_date = datetime.datetime.strptime(dates[1], "%d %B %Y")
 
     os.remove(temporary_txt_filename)
-
-    dates = date_range.strip("\n").split(" to ")
-    logging.debug("Got dates: %s" % dates)
-    end_date = datetime.datetime.strptime(dates[1], "%d %B %Y")
-    start_date = datetime.datetime.strptime("%s %i" % (dates[0], end_date.year), "%d %B %Y")
 
     return "%s_%s.pdf" % (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
