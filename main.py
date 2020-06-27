@@ -154,7 +154,7 @@ class StatementProcessor:
         # states
         in_table = False
         current_date = None
-        num_of_transaction_in_day = 0
+        daily_transaction_num = 0
 
         for line in lines:
             line = line.strip("\n")
@@ -178,13 +178,16 @@ class StatementProcessor:
             logging.debug("Got line object: %s" % line_obj)
             if line_obj["date"]:
                 # We have started a new day
+                daily_transaction_num = 0
                 current_date = datetime.datetime.strptime(line_obj["date"], "%d %b %y")
                 logging.debug("New date: %s" % current_date)
 
             if line_obj["date"] or line_obj["paymentType"]:
                 # We have started a new record
+                daily_transaction_num += 1
                 self.__save_current_record()
                 self.current_record.date = current_date
+                self.current_record.number = daily_transaction_num
                 self.current_record.payment_type = line_obj["paymentType"]
                 self.current_record.entity = line_obj["details"]
                 # logging.debug("Started record: %s" % self.current_record.json())
