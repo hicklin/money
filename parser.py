@@ -42,7 +42,7 @@ class Record:
 
     def json(self):
         ret = {
-            "date": self.date.strftime("%Y-%m-%d"),
+            "date": self.date.strftime("%Y-%m-%d %H"),
             "number": self.number,
             "payment_type": self.payment_type,
             "entity": self.entity,
@@ -177,6 +177,7 @@ class StatementProcessor:
         in_table = False
         current_date = None
         daily_transaction_num = 0
+        daily_transaction_time_step = datetime.timedelta(hours=1)
 
         for line in lines:
             line = line.strip("\n")
@@ -208,7 +209,7 @@ class StatementProcessor:
                 # We have started a new record
                 daily_transaction_num += 1
                 self.__save_current_record()
-                self.current_record.date = current_date
+                self.current_record.date = current_date + daily_transaction_time_step*daily_transaction_num
                 self.current_record.number = daily_transaction_num
                 self.current_record.payment_type = line_obj["paymentType"]
                 self.current_record.entity = line_obj["details"]
@@ -229,6 +230,7 @@ class StatementProcessor:
 
     def parse_txt_files(self, txt_directory):
         files = os.listdir(txt_directory)
+        files.sort()
         for f in files:
             if os.path.splitext(f)[1] == ".txt":
                 logging.info("Parsing file: %s" % f)
@@ -248,7 +250,7 @@ class StatementProcessor:
         for record in self.records:
             # todo check for None printing
             separator = "\t"
-            output_list = ["%s" % record.date.strftime("%Y-%m-%d"),
+            output_list = ["%s" % record.date.strftime("%Y-%m-%dT%H"),
                            "%i" % record.number,
                            "%s" % record.payment_type,
                            "%s" % record.entity,

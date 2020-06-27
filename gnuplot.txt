@@ -1,0 +1,12 @@
+
+set datafile missing "nan"
+set datafile separator "\t"
+set grid
+
+set xdata time
+set timefmt "%Y-%m-%dT%H"
+set format x "%d/%m/%y"
+
+#f(x) = m*x + c
+#fit f(x) "f_data.csv" using 1:8 via m, c
+#plot "f_data.csv" using 1:8 smooth cumulative w lp, f(x)
