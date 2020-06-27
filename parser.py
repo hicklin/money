@@ -119,6 +119,19 @@ class StatementProcessor:
             self.records.append(copy.deepcopy(self.current_record))
             self.current_record.clear()
 
+    @staticmethod
+    def __line_parse_check(line: str, parsed_obj: dict):
+        num_line_chars = len(line.replace(" ", ""))
+        num_obj_chars = 0
+        for _, value in parsed_obj.items():
+            num_obj_chars += len(value.replace(" ", ""))
+
+        if num_line_chars != num_obj_chars:
+            logging.warning("Possible incorrect parsing of line\n\tline:  %s\n\tparse: %s" % (line, parsed_obj))
+            return False
+
+        return True
+
     def __parse_table_line(self, line):
         logging.debug("Parsing line: %s" % line)
         line_len = len(line)
@@ -151,6 +164,8 @@ class StatementProcessor:
         logging.debug("Parsed as: [%s] [%s] [%s] [%s] [%s] [%s]" % (return_obj["date"], return_obj["paymentType"],
                                                                     return_obj["details"], return_obj["paidOut"],
                                                                     return_obj["paidIn"], return_obj["balance"]))
+
+        _ = self.__line_parse_check(line, return_obj)
         return return_obj
 
     def parse_txt_file(self, txt_file):
@@ -199,16 +214,17 @@ class StatementProcessor:
                 # logging.debug("Started record: %s" % self.current_record.json())
             else:
                 self.current_record.entity_location = line_obj["details"]
-                if line_obj["paidOut"]:
-                    logging.debug("Found paidOut: %s" % line_obj["paidOut"])
-                    self.current_record.paidOut = float(line_obj["paidOut"].replace(",", ""))
-                if line_obj["paidIn"]:
-                    logging.debug("Found paidIn: %s" % line_obj["paidIn"])
-                    self.current_record.paidIn = float(line_obj["paidIn"].replace(",", ""))
-                if line_obj["balance"]:
-                    logging.debug("Found balance: %s" % line_obj["balance"])
-                    self.current_record.balance = float(line_obj["balance"].replace(",", ""))
-                # logging.debug("Finalising record: %s" % self.current_record.json())
+
+            if line_obj["paidOut"]:
+                logging.debug("Found paidOut: %s" % line_obj["paidOut"])
+                self.current_record.paidOut = float(line_obj["paidOut"].replace(",", ""))
+            if line_obj["paidIn"]:
+                logging.debug("Found paidIn: %s" % line_obj["paidIn"])
+                self.current_record.paidIn = float(line_obj["paidIn"].replace(",", ""))
+            if line_obj["balance"]:
+                logging.debug("Found balance: %s" % line_obj["balance"])
+                self.current_record.balance = float(line_obj["balance"].replace(",", ""))
+            # logging.debug("Finalising record: %s" % self.current_record.json())
 
     def parse_txt_files(self, txt_directory):
         files = os.listdir(txt_directory)
