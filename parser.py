@@ -6,6 +6,7 @@ import logging
 import datetime
 import argparse
 import subprocess
+import numpy as np
 
 
 class Record:
@@ -15,9 +16,9 @@ class Record:
         self.payment_type = ""
         self.entity = ""
         self.entity_location = ""
-        self.painIn = 0
-        self.painOut = 0
-        self.balance = 0
+        self.paidIn = np.nan
+        self.paidOut = np.nan
+        self.balance = np.nan
 
     def clear(self):
         self.date = None
@@ -25,30 +26,35 @@ class Record:
         self.payment_type = ""
         self.entity = ""
         self.entity_location = ""
-        self.painIn = 0
-        self.painOut = 0
-        self.balance = 0
+        self.paidIn = np.nan
+        self.paidOut = np.nan
+        self.balance = np.nan
 
     def empty(self):
         """
         :return: True if empty, False otherwise.
         """
-        if self.date is None and self.number == 1 and self.payment_type == "" and self.entity == "" and self.entity_location == "" and self.painIn == 0 and self.painOut == 0 and self.balance == 0:
+        if self.date is None and self.number == 1 and self.payment_type == "" and self.entity == "" and self.entity_location == "" and np.isnan(self.paidIn) and np.isnan(self.paidOut) and np.isnan(self.balance):
             return True
         else:
             return False
 
     def json(self):
-        return {
-            "date": self.date,
+        ret = {
+            "date": self.date.strftime("%Y-%m-%d"),
             "number": self.number,
             "payment_type": self.payment_type,
             "entity": self.entity,
-            "entity_location": self.entity_location,
-            "painIn": self.painIn,
-            "painOut": self.painOut,
-            "balance": self.balance
+            "entity_location": self.entity_location
         }
+        if not np.isnan(self.paidIn):
+            ret["paidIn"] = self.paidIn
+        if not np.isnan(self.paidOut):
+            ret["paidOut"] = self.paidOut
+        if not np.isnan(self.balance):
+            ret["balance"] = self.balance
+
+        return ret
 
 
 class StatementProcessor:
@@ -195,10 +201,10 @@ class StatementProcessor:
                 self.current_record.entity_location = line_obj["details"]
                 if line_obj["paidOut"]:
                     logging.debug("Found paidOut: %s" % line_obj["paidOut"])
-                    self.current_record.painOut = float(line_obj["paidOut"].replace(",", ""))
+                    self.current_record.paidOut = float(line_obj["paidOut"].replace(",", ""))
                 if line_obj["paidIn"]:
                     logging.debug("Found paidIn: %s" % line_obj["paidIn"])
-                    self.current_record.painIn = float(line_obj["paidIn"].replace(",", ""))
+                    self.current_record.paidIn = float(line_obj["paidIn"].replace(",", ""))
                 if line_obj["balance"]:
                     logging.debug("Found balance: %s" % line_obj["balance"])
                     self.current_record.balance = float(line_obj["balance"].replace(",", ""))
@@ -214,29 +220,26 @@ class StatementProcessor:
     def export_json(self, output_file):
         output = []
         for record in self.records:
-            r = {
-                "date": record.date.strftime("%Y-%m-%d"),
-                "number": record.number,
-                "payment_type": record.payment_type,
-                "entity": record.entity,
-                "entity_location": record.entity_location,
-                "painIn": record.painIn,
-                "painOut": record.painOut,
-                "balance": record.balance
-            }
-            output.append(r)
+            output.append(record.json())
 
         with open(output_file, 'w') as f:
             json.dump(output, f, ensure_ascii=False, indent=4)
 
     def export_csv(self, output_file):
-        output = "date,number,payment_type,entity,entity_location,painIn,painOut,balance\n"
+        output = "date\tnumber\tpayment_type\tentity\tentity_location\tpaidIn\tpaidOut\tbalance\n"
 
         for record in self.records:
             # todo check for None printing
-            output += "%s,%i,%s,%s,%s,%.2f,%.2f,%.2f\n" % (record.date.strftime("%Y/%m/%d"), record.number,
-                                                           record.payment_type, record.entity, record.entity_location,
-                                                           record.painIn, record.painOut, record.balance)
+            separator = "\t"
+            output_list = ["%s" % record.date.strftime("%Y-%m-%d"),
+                           "%i" % record.number,
+                           "%s" % record.payment_type,
+                           "%s" % record.entity,
+                           "%s" % record.entity_location,
+                           "%.2f" % record.paidIn,
+                           "%.2f" % record.paidOut,
+                           "%.2f" % record.balance]
+            output += "%s\n" % separator.join(output_list)
 
         with open(output_file, 'w') as f:
             f.write(output)
